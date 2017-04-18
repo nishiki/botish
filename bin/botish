@@ -2,10 +2,40 @@
 
 $LOAD_PATH << File.expand_path('../../lib', __FILE__)
 
+require 'optparse'
 require 'botish/botish'
+
+options = {}
+
+OptionParser.new do |opts|
+  opts.banner = 'Usage: botish --host irc.freenode.net --channel "test" [options]'
+
+  opts.on('-c', '--channel CHANNEL') do |channel|
+    options[:channel] = channel
+  end
+
+  opts.on('-H', '--host HOST') do |host|
+    options[:host] = host
+  end
+
+  opts.on('-h', '--help') do
+    puts opts
+    exit 0
+  end
+
+  opts.on('-p', '--port PORT') do |port|
+    options[:port] = port.to_i
+  end
+
+  opts.on('-u', '--user USER') do |user|
+    options[:user] = user
+  end
+end.parse!
 
 Dir["#{File.expand_path('../../modules', __FILE__)}/*"].each do |f|
   require_relative f
 end
 
-Botish::Botish.new.listen
+botish = Botish::Botish.new(options[:host], options[:channel], options[:user], options[:port])
+botish.connect
+botish.listen

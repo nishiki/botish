@@ -5,23 +5,27 @@ require 'botish/base'
 
 module Botish
   class Botish < Base
-    HOST = 'irc.freenode.net'
-    PORT = 6667
-    USERNAME = 'botish'
-    CHANNEL = '#testnishiki'
+    def initialize(host, channel, user, port)
+      @host       = host
+      @channel    = channel
+      @user       = user || 'botish'
+      @port       = port || 6667
+    end
 
-    def initialize
-      @connection = TCPSocket.open(HOST, PORT)
+    def connect
+      @connection = TCPSocket.open(@host, @port)
 
-      send_msg("NICK #{USERNAME}")
-      send_msg("USER #{USERNAME} localhost * :#{USERNAME}")
+      send_msg("NICK #{@user}")
+      send_msg("USER #{@user} localhost * :#{@user}")
+
       Kernel.loop do
         msg = @connection.gets
         log("<- #{msg}")
         break if msg.include?('End of /MOTD command.')
       end
-      send_msg("JOIN #{CHANNEL}")
-      send_msg("PRIVMSG #{CHANNEL} :Je suis là :')")
+
+      send_msg("JOIN #{@channel}")
+      send_msg("PRIVMSG #{@channel} :Je suis là :')")
     end
 
     def listen
@@ -39,10 +43,10 @@ module Botish
       when /^PING (?<host>.+)/
         send_msg("PONG #{Regexp.last_match('host')}")
 
-      when /^:(?<user>[[:alpha:]]+)([^ ]+)? PRIVMSG #{CHANNEL} :#{USERNAME}: ping/
-        send_msg("PRIVMSG #{CHANNEL} :#{Regexp.last_match('user')}: pong")
+      when /^:(?<user>[[:alpha:]]+)([^ ]+)? PRIVMSG #{@channel} :#{@user}: ping/
+        send_msg("PRIVMSG #{@channel} :#{Regexp.last_match('user')}: pong")
 
-      when /^:(?<user>[[:alpha:]]+)([^ ]+)? PRIVMSG (?<channel>#?[[:alpha:]]+) :#{USERNAME}: (?<command>[[:lower:]]+)( (?<args>.+))?/
+      when /^:(?<user>[[:alpha:]]+)([^ ]+)? PRIVMSG (?<channel>#?[[:alpha:]]+) :#{@user}: (?<command>[[:lower:]]+)( (?<args>.+))?/
         command = Regexp.last_match('command')
         options =
           %i[user channel args].each_with_object({}) do |key, opts|
@@ -53,7 +57,7 @@ module Botish
         if Object.const_defined?(plugin_class)
           Object.const_get(plugin_class).new(@connection).run(options)
         else
-          send_msg("PRIVMSG #{args[:channel]} :#{args[:user]}: unknown command")
+          send_msg("PRIVMSG #{options[:channel]} :#{options[:user]}: unknown command")
         end
       end
     end
