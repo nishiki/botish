@@ -2,7 +2,7 @@
 
 $LOAD_PATH << File.expand_path('../../lib', __FILE__)
 
-require 'botish'
+require 'botish/botish'
 
 Dir["#{File.expand_path('../../modules', __FILE__)}/*"].each do |f|
   require_relative f

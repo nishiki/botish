@@ -1,11 +1,10 @@
 require 'json'
 require 'net/http'
+require 'botish/base'
 
 module Botish
-  class Wikipedia
-    def initialize(connection, args)
-      @connection = connection
-
+  class Wikipedia < Base
+    def run(args)
       params = {
         format:   'json',
         action:   'query',
@@ -20,7 +19,7 @@ module Botish
       title     = data['title']
       url       = URI.encode("https://fr.wikipedia.org/wiki/#{title.tr(' ', '_')}")
 
-      @connection.puts("PRIVMSG #{args[:channel]} :#{args[:user]}: #{data['title']} => #{url}")
+      send_msg("PRIVMSG #{args[:channel]} :#{args[:user]}: #{data['title']} => #{url}")
     end
   end
 end

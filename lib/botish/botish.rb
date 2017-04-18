@@ -1,9 +1,10 @@
 #!/usr/bin/ruby
 
 require 'socket'
+require 'botish/base'
 
 module Botish
-  class Botish
+  class Botish < Base
     HOST = 'irc.freenode.net'
     PORT = 6667
     USERNAME = 'botish'
@@ -12,15 +13,15 @@ module Botish
     def initialize
       @connection = TCPSocket.open(HOST, PORT)
 
-      forward("NICK #{USERNAME}")
-      forward("USER #{USERNAME} localhost * :#{USERNAME}")
+      send_msg("NICK #{USERNAME}")
+      send_msg("USER #{USERNAME} localhost * :#{USERNAME}")
       Kernel.loop do
         msg = @connection.gets
         log("<- #{msg}")
         break if msg.include?('End of /MOTD command.')
       end
-      forward("JOIN #{CHANNEL}")
-      forward("PRIVMSG #{CHANNEL} :Je suis là :')")
+      send_msg("JOIN #{CHANNEL}")
+      send_msg("PRIVMSG #{CHANNEL} :Je suis là :')")
     end
 
     def listen
@@ -36,10 +37,10 @@ module Botish
     def parse(msg)
       case msg
       when /^PING (?<host>.+)/
-        forward("PONG #{Regexp.last_match('host')}")
+        send_msg("PONG #{Regexp.last_match('host')}")
 
       when /^:(?<user>[[:alpha:]]+)([^ ]+)? PRIVMSG #{CHANNEL} :#{USERNAME}: ping/
-        forward("PRIVMSG #{CHANNEL} :#{Regexp.last_match('user')}: pong")
+        send_msg("PRIVMSG #{CHANNEL} :#{Regexp.last_match('user')}: pong")
 
       when /^:(?<user>[[:alpha:]]+)([^ ]+)? PRIVMSG (?<channel>#?[[:alpha:]]+) :#{USERNAME}: (?<command>[[:lower:]]+)( (?<args>.+))?/
         command = Regexp.last_match('command')
@@ -48,17 +49,13 @@ module Botish
             opts[key] = Regexp.last_match(key)
           end
 
-        Kernel.const_get("Botish::#{command.capitalize}").new(@connection, options)
+        plugin_class = "Botish::#{command.capitalize}"
+        if Object.const_defined?(plugin_class)
+          Object.const_get(plugin_class).new(@connection).run(options)
+        else
+          send_msg("PRIVMSG #{args[:channel]} :#{args[:user]}: unknown command")
+        end
       end
-    end
-
-    def forward(msg)
-      log("-> #{msg}")
-      @connection.puts(msg)
-    end
-
-    def log(msg)
-      puts "#{Time.now.strftime('%Y-%m-%d %H:%M:%S.%L')} #{msg}"
     end
   end
 end

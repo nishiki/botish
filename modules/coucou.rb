@@ -1,9 +1,9 @@
-module Botish
-  class Coucou
-    def initialize(connection, args)
-      @connection = connection
+require 'botish/base'
 
-      @connection.puts("PRIVMSG #{args[:channel]} :#{args[:user]}: coucou mon petit")
+module Botish
+  class Coucou < Base
+    def run(args)
+      send_msg("PRIVMSG #{args[:channel]} :#{args[:user]}: coucou mon petit")
     end
   end
 end
