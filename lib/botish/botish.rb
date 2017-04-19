@@ -53,7 +53,7 @@ module Botish
             opts[key] = Regexp.last_match(key)
           end
 
-        plugin_class = "Botish::#{command.capitalize}"
+        plugin_class = "Botish::Plugin::#{command.capitalize}"
         if Object.const_defined?(plugin_class)
           Object.const_get(plugin_class).new(@connection).run(options)
         else
