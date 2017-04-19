@@ -1,15 +1,17 @@
 #!/usr/bin/ruby
 
+require 'yaml'
 require 'socket'
 require 'botish/base'
 
 module Botish
   class Botish < Base
-    def initialize(host, channel, user, port)
-      @host       = host
-      @channel    = channel
-      @user       = user || 'botish'
-      @port       = port || 6667
+    def initialize(config_file)
+      config    = YAML.load_file(config_file)
+      @host     = config['host']
+      @channels = config['channels']
+      @user     = config['user'] || 'botish'
+      @port     = config['port'] || 6667
     end
 
     def connect
@@ -24,8 +26,10 @@ module Botish
         break if msg.include?('End of /MOTD command.')
       end
 
-      send_msg("JOIN #{@channel}")
-      send_msg("PRIVMSG #{@channel} :Je suis là :')")
+      @channels.each do |channel|
+        send_msg("JOIN ##{channel}")
+        send_msg("PRIVMSG ##{channel} :Je suis là :')")
+      end
     end
 
     def listen
@@ -43,8 +47,8 @@ module Botish
       when /^PING (?<host>.+)/
         send_msg("PONG #{Regexp.last_match('host')}")
 
-      when /^:(?<user>[[:alpha:]]+)([^ ]+)? PRIVMSG #{@channel} :#{@user}: ping/
-        send_msg("PRIVMSG #{@channel} :#{Regexp.last_match('user')}: pong")
+      when /^:(?<user>[[:alpha:]]+)([^ ]+)? PRIVMSG (?<channel>#[[:alpha:]]+) :#{@user}: ping/
+        send_msg("PRIVMSG #{Regexp.last_match('channel')} :#{Regexp.last_match('user')}: pong")
 
       when /^:(?<user>[[:alpha:]]+)([^ ]+)? PRIVMSG (?<channel>#?[[:alpha:]]+) :#{@user}: (?<command>[[:lower:]]+)( (?<args>.+))?/
         command = Regexp.last_match('command')
