@@ -28,6 +28,10 @@ module Botish
       @channels = config['channels']
       @user     = config['user'] || 'botish'
       @port     = config['port'] || 6667
+
+      Dir["#{config['plugins_dir']}/*"].each do |f|
+        require_relative f
+      end
     end
 
     def connect

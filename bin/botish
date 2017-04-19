@@ -36,10 +36,6 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-Dir["#{File.expand_path('../../modules', __FILE__)}/*"].each do |f|
-  require_relative f
-end
-
 botish = Botish::Botish.new(options[:config_file])
 botish.connect
 botish.listen

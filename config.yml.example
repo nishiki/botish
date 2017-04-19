@@ -5,3 +5,4 @@ user: botish
 channels:
   - test
   - test2
+plugins_dir: /path/plugins
