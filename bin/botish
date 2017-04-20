@@ -24,17 +24,20 @@ require 'botish/botish'
 options = {}
 
 OptionParser.new do |opts|
-  opts.banner = 'Usage: botish --host irc.freenode.net --channel "test" [options]'
+  opts.banner = 'Usage: botish --config config.yml'
 
-  opts.on('-c', '--config PATH') do |path|
+  opts.on('-c', '--config PATH', 'Specify the config file') do |path|
     options[:config_file] = path
   end
 
-  opts.on('-h', '--help') do
+  opts.on('-h', '--help', 'Show this message') do
     puts opts
     exit 0
   end
 end.parse!
+
+raise 'Config file option is missing!' unless options.key?(:config_file)
+raise 'The config file doesn\'t exist' unless File.exist?(options[:config_file])
 
 botish = Botish::Botish.new(options[:config_file])
 botish.connect
